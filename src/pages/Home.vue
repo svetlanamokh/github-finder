@@ -15,8 +15,8 @@
           @search="search = $event"/>
 
         <!-- buttons -->
-        <button v-if="!repos" class="btn btnPrimary" @click="getRepos">Search!</button>
-        <button v-else class="btn btnPrimary" @click="getRepos">Search Again!</button>
+        <button v-if="!repos" class="btn btnPrimary" @click="getData()">Search!</button>
+        <button v-else class="btn btnPrimary" @click="getData()">Search Again!</button>
 
         <!-- wrapper -->
         <div class="repos__wrapper" v-if="repos">
@@ -90,44 +90,39 @@ export default {
   },
   methods: {
     getRepos () {
-      axios
-        .get(`https://api.github.com/users/${this.search}/repos`)
-          .then(res => {
-            this.error = null
-            this.repos = res.data
-            console.log(this.repos)
-          })
-          .catch(err => {
-            console.log(err)
-            this.repos = null
-            this.error = 'Can`t find this user'
-          })
-        
-      axios
-        .get(`https://api.github.com/users/${this.search}`)
-          .then(resp => {
-            this.users = resp.data
-            console.log(resp.data)
-          })
-          .catch(err => {
-            console.log(err)
-            this.repos = null
-            this.error = 'Can`t find this user'
-            this.users = ''
-          })
+      return axios.get(`https://api.github.com/users/${this.search}/repos`)
+    },
+    getUsers () {
+      return axios.get(`https://api.github.com/users/${this.search}`)
+    },
+    getData () {
+      Promise.all([this.getRepos(), this.getUsers()])
+        .then((res) => {
+          this.error = null
+          this.repos = res[0].data
+          this.users = res[1].data
+          console.log(res)
+        })
+        .catch(err => {
+          console.log(err)
+          this.repos = null
+          this.error = 'Can`t find this user'
+          this.users = ''
+        })
+      
     },
     sort (e) {
-          if (e === this.currentSort) {
-              this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc'
-          }
-          this.currentSort = e
-      },
-      prevPage () {
-          if (this.page.current > 1) this.page.current-=1         
-      },
-      nextPage () {
-          if ((this.page.current * this.page.length) < this.repos.length) this.page.current+=1
+      if (e === this.currentSort) {
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc'
       }
+      this.currentSort = e
+    },
+    prevPage () {
+      if (this.page.current > 1) this.page.current-=1         
+    },
+    nextPage () {
+      if ((this.page.current * this.page.length) < this.repos.length) this.page.current+=1
+    }
 
   }
 }
